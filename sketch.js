@@ -1,10 +1,13 @@
-var points = [];
-// var button;
+var nodes = [];
 var canvas;
+
 const INT_MAX = 100000;
+const N_NODES = 50;
+var nodecount = 0;
 function setup() {
-  canvas = createCanvas(480,480);
-  canvas.mousePressed(addPoint);
+  createCanvas(480,480);
+  // canvas.mousePressed(addPoint);
+  makeGraph(nodes);
  
   // button = createButton("Clear");
   // button.mousePressed(clearPoints);
@@ -14,49 +17,60 @@ function setup() {
 //   points.pop();
 // }
 
-function addPoint(){
-  points.push(new Point(mouseX,mouseY));
+// function addPoint(){
+//   nodes.push(new Point(mouseX,mouseY, nodecount++));
+// }
+
+function edgeComperator(a,b){
+  return a.distSq - b.distSq;
 }
 
-function draw() {
-  background(31);
-  // console.log(points.length);
-  var checked = [];
-  var unchecked = [];
-
-  for(var i=0;i<points.length;i++){
-    unchecked.push(points[i]);
-  }
-
-  var start = unchecked[0];
-  checked.push(start);
-  unchecked.splice(0, 1);
-
-  while(unchecked.length>0){
-    var min = INT_MAX;
-    var cIndex, uIndex;
-
-    for(var i=0;i<checked.length;i++){
-      for(var j=0;j<unchecked.length;j++){
-        var p1 = checked[i];
-        var p2 = unchecked[j];
-        var d = dist(p1.x,p1.y,p2.x,p2.y);
-        if(d < min){
-          min = d;
-          cIndex = i;
-          uIndex = j;
-        }
+function MSTKruskal(nodes){
+  var edges = [];
+  for(var i=0; i<nodes.length;i++){
+    for(var j=0;j<nodes.length;j++){
+      if(nodes[i].id < nodes[j].id){
+        edges.push(new Edge(nodes[i],nodes[j]));
+        // console.log(edges);
       }
     }
-    strokeWeight(4);
-    stroke(random(50,230));
-    
-    line(checked[cIndex].x, checked[cIndex].y, unchecked[uIndex].x, unchecked[uIndex].y);
-    checked.push(unchecked[uIndex]);
-    unchecked.splice(uIndex, 1);
   }
-
- for(var i=0;i<points.length;i++){
-  points[i].show();
- }
+  var grouping = new DisjointSet(edges.length);
+  // console.log(edges)
+  edges.sort(edgeComperator);
+  // console.log(edges)
+  for(var i=0;i<edges.length;i++){
+    if(grouping.find(edges[i].a.id) != grouping.find(edges[i].b.id)){
+      edges[i].a.addEdge(edges[i].b);
+      grouping.union(edges[i].a.id, edges[i].b.id);
+    }
+  }
 }
+
+function makeGraph(nodes){
+  var nodeCount = 0;
+  // var nodes = [];
+  for(var i=0;i<N_NODES;i++){
+    nodes.push(new Point(random(width), random(height), nodeCount++));
+  }
+  MSTKruskal(nodes);
+}
+
+
+function draw() {
+  background(231);
+  // console.log(points.length);
+  for(var i=0;i<nodes.length;i++){
+    nodes[i].edges = [];
+    nodes[i].wander();
+  }
+  MSTKruskal(nodes);
+  for (var i=0;i<nodes.length;i++) {
+    nodes[i].show();
+  }
+}
+
+// function mouseClicked()
+// {
+//   makeGraph(nodes);  
+// }
